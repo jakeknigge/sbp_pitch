@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stick Breaking 101</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Stick Breaking 101">
+  <meta name="author" content="Jake W. Knigge">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/default.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Stick Breaking 101</h1>
+    <h2>A Constructive Method for Creating Random Measures</h2>
+    <p>Jake W. Knigge<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <article data-timings="">
+    <style>
+em {
+  font-style: italic
+}
+strong {
+  font-weight: bold;
+}
+</style>
+
+<h2>What is the stick breaking process (SBP)?</h2>
+
+<ul>
+<li>stick breaking is a constructive process for putting a distribution on a (potentially)
+infinite dimensional object, such as the natural numbers, \(\mathbf{N}\)
+
+<ul>
+<li>\(\mathbf{N}\): 1, 2, 3, ...</li>
+</ul></li>
+<li>the SBP generates an infinite sequence that sums to 1 (<em>i.e.,</em> a distribution)</li>
+<li>the distribution is random in two ways
+
+<ul>
+<li>the stick lengths are random</li>
+<li>the atom locations are random</li>
+</ul></li>
+<li>the SBP distribution is <em>discrete</em> or <em>atomic</em></li>
+<li>stick breaking is used in Bayesian nonparametrics to sample from Dirichlet processes</li>
+<li>see <em><a href="http://www.cs.berkeley.edu/%7Ejordan/publications.html">Bayesian Nonparametric Learning: Expressive Priors for Intelligent Systems</a></em> 
+by Michael Jordan for details on the SBP and its role in Bayesian nonparametrics</li>
+<li>the SBP Shiny app lives here: <a href="https://knigge.shinyapps.io/Shiny">https://knigge.shinyapps.io/Shiny</a></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Sticks</h2>
+  </hgroup>
+  <article data-timings="">
+    
+<div style='float:left;width:48%;'>
+  <ul>
+<li>draw an infinite sequence of beta random variables \((Z_n)_{n \ge 1}\) with 
+\(Z_i \sim \mathrm{Beta}(1, \alpha)\)
+
+<ul>
+<li>where \(\alpha\) is known as the <em>concentration</em> parameter</li>
+</ul></li>
+<li>now, let&#39;s break our beta sticks
+
+<ul>
+<li>set \(\pi_1 = Z_1\)</li>
+<li>set \(\pi_k = Z_k \prod_{j = 1}^{k - 1}(1 - Z_j)\)</li>
+</ul></li>
+<li>for example, \(\pi_2 = Z_2 \cdot (1 - Z_1)\)</li>
+<li>each \(\pi_k\) is a portion of the (unit) stick</li>
+<li>note that the \(\pi_k\)&#39;s sum to 1 (with probability 1)
+
+<ul>
+<li><strong>hint:</strong> look at \(1 - \sum_{k=1}^{\infty} \pi_k\) and replace \(\pi\)&#39;s with \(Z\)&#39;s</li>
+</ul></li>
+</ul>
+
+</div>
+<div style='float:right;width:48%;'>
+  <pre><code class="r"># Number of atoms and random number seed
+n &lt;- 100; set.seed(222)
+
+# Sample beta weights
+betas &lt;- rbeta(n, 1, 10); 
+sticks &lt;- 1 - betas; stick_prod &lt;- rep(0, n)
+
+# Calculate products before pi vlaues
+stick_prod &lt;- cumprod(sticks)
+
+# Stick-breaking weights
+pi &lt;- rep(0, n); pi[1] &lt;- betas[1]; 
+pi[2:(n-1)] &lt;- betas[2:(n-1)] * 
+                  stick_prod[1:(n-2)]
+# Allocate remaining mass to last pi weight
+pi[n] &lt;- 1 - sum(pi[1:n-1])
+</code></pre>
+
+</div>
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Locations</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>the atom locations live on some (measurable) space \(\Omega\) (<em>e.g.,</em> the real numbers, \(\mathbf{R}\))</p>
+
+<ul>
+<li>pick a distribution \(G_0\), (<em>e.g.,</em> normal, gamma, beta, Cauchy, etc.) 
+and draw an infinite sample (i.i.d.) from that distribution
+
+<ul>
+<li>call this sequence of random variables \((\varphi_k)_{k \ge 1}\)</li>
+</ul></li>
+<li>put a point-mass (<em>i.e.,</em> a stick of length one) at each \(\varphi_k\) 
+and call that \(\delta_{\varphi_k}\)</li>
+<li>define \[G = \sum_{k = 1}^{\infty} \pi_k \delta_{\varphi_k}\] and you have a random probability measure that lives on \(\Omega\)</li>
+</ul>
+
+<pre><code class="r"># Sample from base measure---these are the phi_k&#39;s
+G0 &lt;- rnorm(n, 0, 10)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Random measure</h2>
+  </hgroup>
+  <article data-timings="">
+    
+<div style='float:left;width:48%;'>
+  <pre><code class="r"># Plot resulting random measure
+plot(G0, pi, type = &quot;h&quot;, col = &quot;red&quot;, lwd = 2, 
+     xlab = &quot;locations&quot;, ylab = &quot;weights&quot;)
+points(G0, pi, pch = 19, col = &quot;red&quot;)
+</code></pre>
+
+<ul>
+<li>here&#39;s an example where \(\varphi_k \stackrel{iid}{\sim} N(0, 10)\)</li>
+<li>the \(\varphi_k\)&#39;s give the x-axis locations</li>
+<li>the \(\pi_k\)&#39;s give the <em>weights</em> or <em>probabilities</em></li>
+<li>there are 100 atoms in this example
+
+<ul>
+<li>the 100th atom gets the mass of \(\sum_{k=100}^{\infty}\pi_k = 
+1 -\sum_{k=1}^{99}\pi_k\)</li>
+<li>this sum amounts to probability of 1.2 &times; 10<sup>-4</sup></li>
+</ul></li>
+</ul>
+
+</div>
+<div style='float:right;width:48%;'>
+  <p><img src="assets/fig/unnamed-chunk-6-1.png" alt="plot of chunk unnamed-chunk-6"> </p>
+
+</div>
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='NA'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Sticks'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Locations'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Random measure'>
+         4
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- MathJax: Fall back to local if CDN offline but local image fonts are not supported (saves >100MB) -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        processEscapes: true
+      }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <!-- <script src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script> -->
+  <script>window.MathJax || document.write('<script type="text/x-mathjax-config">MathJax.Hub.Config({"HTML-CSS":{imageFont:null}});<\/script><script src="libraries/widgets/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"><\/script>')
+</script>
+<!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
